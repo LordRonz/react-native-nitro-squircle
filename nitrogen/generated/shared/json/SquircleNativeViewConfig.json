@@ -1,0 +1,24 @@
+{
+  "uiViewClassName": "SquircleNativeView",
+  "supportsRawText": false,
+  "bubblingEventTypes": {},
+  "directEventTypes": {},
+  "validAttributes": {
+    "cornerSmoothing": true,
+    "squircleBackgroundColor": true,
+    "squircleBorderColor": true,
+    "squircleBorderWidth": true,
+    "squircleBorderStyle": true,
+    "topLeftRadius": true,
+    "topRightRadius": true,
+    "bottomRightRadius": true,
+    "bottomLeftRadius": true,
+    "overflowHidden": true,
+    "squircleShadowColor": true,
+    "squircleShadowOpacity": true,
+    "squircleShadowRadius": true,
+    "shadowOffsetX": true,
+    "shadowOffsetY": true,
+    "hybridRef": true
+  }
+}

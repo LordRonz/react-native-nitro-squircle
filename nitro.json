@@ -1,0 +1,30 @@
+{
+  "$schema": "https://nitro.margelo.com/nitro.schema.json",
+  "cxxNamespace": ["nitrosquircle"],
+  "ios": {
+    "iosModuleName": "NitroSquircle"
+  },
+  "android": {
+    "androidNamespace": ["nitrosquircle"],
+    "androidCxxLibName": "NitroSquircle"
+  },
+  "autolinking": {
+    "SquircleNativeView": {
+      "ios": {
+        "language": "swift",
+        "implementationClassName": "HybridSquircleNativeView"
+      },
+      "android": {
+        "language": "kotlin",
+        "implementationClassName": "HybridSquircleNativeView"
+      }
+    },
+    "SquircleDiagnostics": {
+      "all": {
+        "language": "c++",
+        "implementationClassName": "HybridSquircleDiagnostics"
+      }
+    }
+  },
+  "ignorePaths": ["**/node_modules"]
+}

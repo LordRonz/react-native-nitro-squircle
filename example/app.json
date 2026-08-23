@@ -1,0 +1,17 @@
+{
+  "expo": {
+    "name": "Nitro Squircle",
+    "slug": "nitro-squircle-example",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "ios": {
+      "bundleIdentifier": "com.aaron.nitrosquircleexample",
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.aaron.nitrosquircleexample"
+    }
+  }
+}

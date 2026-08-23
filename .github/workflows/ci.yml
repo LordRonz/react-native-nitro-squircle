@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  library:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run codegen
+      - run: git diff --exit-code -- nitrogen/generated
+      - run: npm run typecheck
+      - run: npm run lint-ci
+      - run: npm run format:check
+      - run: npm test
+      - run: npm run build
+      - run: npm pack --dry-run
+
+  ios:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            example/package-lock.json
+      - run: npm ci
+      - run: npm ci --prefix example
+      - run: npx expo prebuild --clean --platform ios --no-install
+        working-directory: example
+      - run: pod install
+        working-directory: example/ios
+      - run: >-
+          xcodebuild
+          -workspace NitroSquircle.xcworkspace
+          -scheme 'NitroSquircle (NitroSquircle project)'
+          -configuration Debug
+          -sdk iphonesimulator
+          -destination 'generic/platform=iOS Simulator'
+          CODE_SIGNING_ALLOWED=NO
+          build
+        working-directory: example/ios
+
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            example/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: android-actions/setup-android@v3
+      - run: npm ci
+      - run: npm ci --prefix example
+      - run: npx expo prebuild --clean --platform android --no-install
+        working-directory: example
+      - run: ./gradlew :app:assembleDebug --no-daemon
+        working-directory: example/android

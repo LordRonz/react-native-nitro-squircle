@@ -1,0 +1,124 @@
+{
+  "name": "react-native-nitro-squircle",
+  "version": "0.0.1",
+  "description": "A native Figma-style squircle View for React Native powered by Nitro Modules.",
+  "main": "lib/index",
+  "module": "lib/index",
+  "types": "lib/index.d.ts",
+  "react-native": "src/index",
+  "source": "src/index",
+  "files": [
+    "src",
+    "react-native.config.js",
+    "lib",
+    "nitrogen",
+    "android/build.gradle",
+    "android/gradle.properties",
+    "android/fix-prefab.gradle",
+    "android/CMakeLists.txt",
+    "android/src",
+    "cpp",
+    "docs",
+    "benchmarks",
+    "ios/**/*.h",
+    "ios/**/*.m",
+    "ios/**/*.mm",
+    "ios/**/*.cpp",
+    "ios/**/*.swift",
+    "nitro.json",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md",
+    "*.podspec",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf android/build node_modules/**/android/build lib",
+    "lint": "eslint \"src/**/*.{ts,tsx}\" \"tests/**/*.{ts,tsx}\" \"example/src/**/*.{ts,tsx}\" --fix",
+    "lint-ci": "eslint \"src/**/*.{ts,tsx}\" \"tests/**/*.{ts,tsx}\" \"example/src/**/*.{ts,tsx}\" --max-warnings 0",
+    "format:check": "prettier --check \".github/**/*.yml\" \"src/**/*.{ts,tsx}\" \"tests/**/*.{ts,tsx}\" \"example/**/*.{js,json,ts,tsx}\" \"docs/**/*.md\" \"benchmarks/**/*.md\" \"*.{json,md}\"",
+    "codegen": "nitrogen --logLevel=debug",
+    "specs": "tsc --noEmit false && npm run codegen",
+    "test:cpp": "mkdir -p build/cpp-tests && clang++ -std=c++20 -Wall -Wextra -Werror -Icpp cpp/tests/SquircleGeometryTest.cpp cpp/SquircleGeometry.cpp cpp/SquircleInstrumentation.cpp cpp/SquirclePathCache.cpp -o build/cpp-tests/squircle_geometry_tests && build/cpp-tests/squircle_geometry_tests",
+    "test:ts": "tsc -p tsconfig.tests.json && jest --runInBand --no-watchman",
+    "test": "npm run test:cpp && npm run test:ts"
+  },
+  "keywords": [
+    "react-native",
+    "nitro",
+    "squircle",
+    "corner-smoothing",
+    "fabric"
+  ],
+  "author": "Aaron",
+  "license": "MIT",
+  "homepage": "https://www.npmjs.com/package/react-native-nitro-squircle",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/"
+  },
+  "devDependencies": {
+    "@react-native/eslint-config": "0.85.3",
+    "@react-native/babel-preset": "0.85.3",
+    "@react-native/jest-preset": "0.85.3",
+    "@types/jest": "^29.5.14",
+    "@types/react": "^19.2.15",
+    "@types/react-test-renderer": "^19.1.0",
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
+    "jest": "^29.7.0",
+    "nitrogen": "0.37.0",
+    "prettier": "^3.8.3",
+    "react": "19.2.3",
+    "react-native": "0.85.3",
+    "react-native-nitro-modules": "0.37.0",
+    "react-test-renderer": "19.2.3",
+    "typescript": "^6.0.3"
+  },
+  "peerDependencies": {
+    "react": ">=19.0.0",
+    "react-native": ">=0.78.0",
+    "react-native-nitro-modules": ">=0.37.0 <0.38.0"
+  },
+  "eslintConfig": {
+    "root": true,
+    "extends": [
+      "@react-native",
+      "prettier"
+    ],
+    "plugins": [
+      "prettier"
+    ],
+    "rules": {
+      "prettier/prettier": [
+        "warn",
+        {
+          "quoteProps": "consistent",
+          "singleQuote": true,
+          "tabWidth": 2,
+          "trailingComma": "es5",
+          "useTabs": false
+        }
+      ]
+    }
+  },
+  "eslintIgnore": [
+    "node_modules/",
+    "lib/"
+  ],
+  "prettier": {
+    "quoteProps": "consistent",
+    "singleQuote": true,
+    "tabWidth": 2,
+    "trailingComma": "es5",
+    "useTabs": false,
+    "semi": false
+  },
+  "jest": {
+    "preset": "@react-native/jest-preset",
+    "testMatch": [
+      "<rootDir>/tests/**/*.test.ts?(x)"
+    ]
+  }
+}
