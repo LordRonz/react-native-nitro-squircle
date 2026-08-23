@@ -137,7 +137,6 @@ No performance result is claimed yet. Follow the reproducible
 ```sh
 cd example
 npm install
-npx expo prebuild
 npm run ios
 ```
 

@@ -63,5 +63,14 @@ target 'NitroSquircle' do
       :mac_catalyst_enabled => false,
       :ccache_enabled => ccache_enabled?(podfile_properties),
     )
+
+    # Expo 57's generated command does not quote projects whose paths contain spaces.
+    installer.pods_project.targets.each do |target|
+      next unless target.name == 'EXConstants'
+      target.shell_script_build_phases.each do |phase|
+        next unless phase.shell_script.include?('get-app-config-ios.sh')
+        phase.shell_script = 'PROJECT_DIR=/tmp/Pods PROJECT_ROOT="$PODS_ROOT/../.." bash -l "$PODS_TARGET_SRCROOT/../scripts/get-app-config-ios.sh"'
+      end
+    end
   end
 end
