@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import {
   LayoutChangeEvent,
   NativeSyntheticEvent,
@@ -42,6 +42,7 @@ function Slider({
   onChange: (value: number) => void
 }) {
   const [width, setWidth] = useState(0)
+  const trackLeft = useRef(0)
   const progress = (value - min) / (max - min)
   const fillStyle = { width: `${progress * 100}%` as `${number}%` }
   const thumbStyle = { left: width > 0 ? progress * width - 10 : 0 }
@@ -52,8 +53,13 @@ function Slider({
     onChange(Math.round(next / step) * step)
   }
 
-  const handleTouch = (event: NativeSyntheticEvent<NativeTouchEvent>) => {
+  const handleTouchStart = (event: NativeSyntheticEvent<NativeTouchEvent>) => {
     if (width > 0) update(event.nativeEvent.locationX)
+    trackLeft.current = event.nativeEvent.pageX - event.nativeEvent.locationX
+  }
+
+  const handleTouchMove = (event: NativeSyntheticEvent<NativeTouchEvent>) => {
+    if (width > 0) update(event.nativeEvent.pageX - trackLeft.current)
   }
 
   const handleLayout = (event: LayoutChangeEvent) => {
@@ -82,11 +88,11 @@ function Slider({
         onLayout={handleLayout}
         onStartShouldSetResponder={() => true}
         onMoveShouldSetResponder={() => true}
-        onResponderGrant={handleTouch}
-        onResponderMove={handleTouch}
+        onResponderGrant={handleTouchStart}
+        onResponderMove={handleTouchMove}
         style={styles.sliderHitArea}
       >
-        <View style={styles.sliderTrack}>
+        <View pointerEvents="none" style={styles.sliderTrack}>
           <View style={[styles.sliderFill, fillStyle]} />
           <View style={[styles.sliderThumb, thumbStyle]} />
         </View>
