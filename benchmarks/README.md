@@ -1,8 +1,12 @@
 # Benchmark protocol
 
 The example app contains the executable benchmark screen. It compares a normal
-React Native `View`, `react-native-fast-squircle` 1.1.5, and this package with
-identical dimensions, colors, radii, borders, and children.
+React Native `View`, `react-native-figma-squircle` 0.4.0,
+`react-native-fast-squircle` 1.1.5, and this package with identical dimensions,
+colors, radii, borders, and children.
+
+`react-native-figma-squircle` is excluded from the resize scenario because 0.4.0
+measures its backing rectangle only on mount.
 
 Run a native release build on one physical device, disable remote debugging, and
 record the device, OS, React Native version, Nitro version, build mode, view

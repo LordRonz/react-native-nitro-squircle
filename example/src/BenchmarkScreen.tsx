@@ -14,17 +14,24 @@ import {
   View,
 } from 'react-native'
 import FastSquircleView from 'react-native-fast-squircle'
+import { SquircleView as FigmaSquircleView } from 'react-native-figma-squircle'
 import { SquircleView } from 'react-native-nitro-squircle'
 import { getSquircleDiagnostics } from '../../src/diagnostics'
 
-type Renderer = 'RN View' | 'fast-squircle' | 'nitro-squircle'
+type Renderer =
+  'RN View' | 'figma-squircle' | 'fast-squircle' | 'nitro-squircle'
 type Scenario =
   'mount' | 'no-op' | 'radius' | 'smoothing' | 'resize' | 'FlatList'
 type Stats = ReturnType<
   ReturnType<typeof getSquircleDiagnostics>['getSnapshot']
 >
 
-const renderers: Renderer[] = ['RN View', 'fast-squircle', 'nitro-squircle']
+const renderers: Renderer[] = [
+  'RN View',
+  'figma-squircle',
+  'fast-squircle',
+  'nitro-squircle',
+]
 const scenarios: Scenario[] = [
   'mount',
   'no-op',
@@ -33,6 +40,7 @@ const scenarios: Scenario[] = [
   'resize',
   'FlatList',
 ]
+const figmaScenarios = scenarios.filter((scenario) => scenario !== 'resize')
 const counts = [100, 500, 1000]
 
 const Item = memo(function BenchmarkItem({
@@ -47,17 +55,36 @@ const Item = memo(function BenchmarkItem({
   const radius = scenario === 'radius' ? 8 + (phase % 40) : 24
   const smoothing = scenario === 'smoothing' ? (phase % 100) / 100 : 0.6
   const sizeOffset = scenario === 'resize' ? phase % 12 : 0
-  const style = {
+  const layoutStyle = {
     width: 64 + sizeOffset,
     height: 64 + sizeOffset,
+    alignItems: 'center',
+    justifyContent: 'center',
+  } as const
+  const style = {
+    ...layoutStyle,
     borderRadius: radius,
     backgroundColor: '#4f46e5',
     borderColor: '#c4b5fd',
     borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
   } as const
   const child = <Text style={styles.itemText}>•</Text>
+  if (renderer === 'figma-squircle') {
+    return (
+      <FigmaSquircleView
+        squircleParams={{
+          cornerRadius: radius,
+          cornerSmoothing: smoothing,
+          fillColor: '#4f46e5',
+          strokeColor: '#c4b5fd',
+          strokeWidth: 1,
+        }}
+        style={layoutStyle}
+      >
+        {child}
+      </FigmaSquircleView>
+    )
+  }
   if (renderer === 'fast-squircle') {
     return (
       <FastSquircleView cornerSmoothing={smoothing} style={style}>
@@ -157,11 +184,16 @@ export function BenchmarkScreen() {
         title="Renderer"
         values={renderers}
         value={renderer}
-        onChange={setRenderer}
+        onChange={(value) => {
+          setRenderer(value)
+          if (value === 'figma-squircle' && scenario === 'resize') {
+            setScenario('mount')
+          }
+        }}
       />
       <Picker
         title="Scenario"
-        values={scenarios}
+        values={renderer === 'figma-squircle' ? figmaScenarios : scenarios}
         value={scenario}
         onChange={setScenario}
       />

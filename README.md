@@ -126,9 +126,10 @@ comparison and implementation details.
 
 ## Benchmarking
 
-The example app compares React Native `View`, `react-native-fast-squircle`, and
-this package at 100, 500, and 1000 views. It includes initial mount, unchanged
-rerender, radius, smoothing, resize, and realistic `FlatList` scenarios.
+The example app compares React Native `View`, `react-native-figma-squircle`,
+`react-native-fast-squircle`, and this package at 100, 500, and 1000 views. It
+includes initial mount, unchanged rerender, radius, smoothing, resize, and
+realistic `FlatList` scenarios.
 
 No performance result is claimed yet. Follow the reproducible
 [benchmark protocol](benchmarks/README.md) and record real device results in

@@ -15,8 +15,10 @@
     "react": "19.2.3",
     "react-native": "0.86.2",
     "react-native-fast-squircle": "1.1.5",
+    "react-native-figma-squircle": "^0.4.0",
     "react-native-nitro-modules": "0.37.0",
-    "react-native-nitro-squircle": "file:.."
+    "react-native-nitro-squircle": "file:..",
+    "react-native-svg": "^15.15.4"
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
