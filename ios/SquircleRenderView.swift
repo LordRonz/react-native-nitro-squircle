@@ -1,7 +1,7 @@
 import NitroModules
 import UIKit
 
-struct SquircleRenderState: @unchecked Sendable {
+struct SquircleRenderState: Equatable, @unchecked Sendable {
   var cornerSmoothing = 0.6
   var backgroundColor = 0.0
   var borderColor = 0.0
@@ -21,21 +21,20 @@ struct SquircleRenderState: @unchecked Sendable {
 
 final class SquircleRenderView: UIView {
   private let geometry = RNSquircleGeometryEngine()
-  private let backgroundLayer = CAShapeLayer()
-  private let borderLayer = CAShapeLayer()
-  private let shadowLayer = CAShapeLayer()
-  private let clipMask = CAShapeLayer()
+  private var backgroundLayer: CAShapeLayer?
+  private var borderLayer: CAShapeLayer?
+  private var shadowLayer: CAShapeLayer?
+  private var clipMask: CAShapeLayer?
   private weak var hostView: UIView?
   private var state = SquircleRenderState()
+  private var appliedState: SquircleRenderState?
+  private var appliedBounds = CGRect.null
 
   override init(frame: CGRect) {
     super.init(frame: frame)
     isUserInteractionEnabled = false
     isOpaque = false
     backgroundColor = .clear
-    backgroundLayer.zPosition = -1_024
-    shadowLayer.zPosition = -1_025
-    borderLayer.zPosition = 1_024
   }
 
   @available(*, unavailable)
@@ -65,13 +64,19 @@ final class SquircleRenderView: UIView {
 
   func reset() {
     state = SquircleRenderState()
+    appliedState = nil
+    appliedBounds = .null
     geometry.reset()
     CATransaction.begin()
     CATransaction.setDisableActions(true)
-    backgroundLayer.path = nil
-    borderLayer.path = nil
-    shadowLayer.path = nil
-    clipMask.path = nil
+    backgroundLayer?.path = nil
+    backgroundLayer?.fillColor = nil
+    borderLayer?.path = nil
+    borderLayer?.isHidden = true
+    shadowLayer?.path = nil
+    shadowLayer?.shadowPath = nil
+    shadowLayer?.shadowOpacity = 0
+    clipMask?.path = nil
     clearHostMask()
     CATransaction.commit()
   }
@@ -80,21 +85,23 @@ final class SquircleRenderView: UIView {
     guard let host = superview, host !== hostView else { return }
     detachLayers()
     hostView = host
-    host.layer.addSublayer(shadowLayer)
-    host.layer.addSublayer(backgroundLayer)
-    host.layer.addSublayer(borderLayer)
+    appliedState = nil
+    appliedBounds = .null
+    if let shadowLayer { host.layer.addSublayer(shadowLayer) }
+    if let backgroundLayer { host.layer.addSublayer(backgroundLayer) }
+    if let borderLayer { host.layer.addSublayer(borderLayer) }
   }
 
   private func detachLayers() {
     clearHostMask()
-    backgroundLayer.removeFromSuperlayer()
-    borderLayer.removeFromSuperlayer()
-    shadowLayer.removeFromSuperlayer()
+    backgroundLayer?.removeFromSuperlayer()
+    borderLayer?.removeFromSuperlayer()
+    shadowLayer?.removeFromSuperlayer()
     hostView = nil
   }
 
   private func clearHostMask() {
-    if hostView?.layer.mask === clipMask {
+    if let clipMask, hostView?.layer.mask === clipMask {
       hostView?.layer.mask = nil
     }
   }
@@ -109,7 +116,35 @@ final class SquircleRenderView: UIView {
     guard let host = hostView else { return }
 
     let bounds = host.bounds
-    let geometryChanged = geometry.update(
+    guard bounds.width > 0, bounds.height > 0 else { return }
+    guard appliedState != state || appliedBounds != bounds else { return }
+
+    let background = Self.color(from: state.backgroundColor)
+    let drawsBackground = background.cgColor.alpha > 0
+    let drawsBorder = state.borderWidth > 0
+    let drawsShadow = state.shadowOpacity > 0
+    let clipsChildren = state.overflowHidden
+
+    let createsBackgroundLayer = drawsBackground && backgroundLayer == nil
+    let createsBorderLayer = drawsBorder && borderLayer == nil
+    let createsShadowLayer = drawsShadow && shadowLayer == nil
+    let createsClipMask = clipsChildren && clipMask == nil
+
+    if createsBackgroundLayer {
+      backgroundLayer = makeLayer(zPosition: -1_024, on: host)
+    }
+    if createsBorderLayer {
+      borderLayer = makeLayer(zPosition: 1_024, on: host)
+    }
+    if createsShadowLayer {
+      shadowLayer = makeLayer(zPosition: -1_025, on: host)
+    }
+    if createsClipMask {
+      clipMask = CAShapeLayer()
+    }
+
+    let drawsGeometry = drawsBackground || drawsBorder || drawsShadow || clipsChildren
+    let geometryChanged = drawsGeometry && geometry.update(
       withWidth: bounds.width,
       height: bounds.height,
       topLeftRadius: state.topLeftRadius,
@@ -122,41 +157,57 @@ final class SquircleRenderView: UIView {
 
     CATransaction.begin()
     CATransaction.setDisableActions(true)
-    for layer in [shadowLayer, backgroundLayer, borderLayer] {
+    for layer in [shadowLayer, backgroundLayer, borderLayer].compactMap({ $0 }) {
       layer.frame = bounds
       layer.contentsScale = window?.screen.scale ?? UIScreen.main.scale
     }
 
-    if geometryChanged {
+    let needsPathUpdate =
+      geometryChanged || createsBackgroundLayer || createsBorderLayer || createsShadowLayer || createsClipMask
+    if drawsGeometry && needsPathUpdate {
       let outerPath = geometry.outerPath()
-      backgroundLayer.path = outerPath
-      shadowLayer.path = outerPath
-      shadowLayer.shadowPath = outerPath
-      borderLayer.path = geometry.borderCenterPath()
-      clipMask.path = outerPath
+      backgroundLayer?.path = outerPath
+      shadowLayer?.path = outerPath
+      shadowLayer?.shadowPath = outerPath
+      borderLayer?.path = geometry.borderCenterPath()
+      clipMask?.path = outerPath
     }
 
-    let background = Self.color(from: state.backgroundColor)
-    backgroundLayer.fillColor = background.cgColor
-    shadowLayer.fillColor = background.cgColor
-    shadowLayer.shadowColor = Self.color(from: state.shadowColor).cgColor
-    shadowLayer.shadowOpacity = Float(max(state.shadowOpacity, 0))
-    shadowLayer.shadowRadius = max(state.shadowRadius, 0)
-    shadowLayer.shadowOffset = CGSize(width: state.shadowOffsetX, height: state.shadowOffsetY)
+    backgroundLayer?.fillColor = background.cgColor
 
-    borderLayer.fillColor = UIColor.clear.cgColor
-    borderLayer.strokeColor = Self.color(from: state.borderColor).cgColor
-    borderLayer.lineWidth = max(state.borderWidth, 0)
-    borderLayer.lineDashPattern = Self.dashPattern(for: state.borderStyle, width: borderLayer.lineWidth)
-    borderLayer.lineCap = state.borderStyle == .dotted ? .round : .butt
-    borderLayer.isHidden = state.borderWidth <= 0
+    shadowLayer?.fillColor = background.cgColor
+    shadowLayer?.shadowColor = Self.color(from: state.shadowColor).cgColor
+    shadowLayer?.shadowOpacity = Float(max(state.shadowOpacity, 0))
+    shadowLayer?.shadowRadius = max(state.shadowRadius, 0)
+    shadowLayer?.shadowOffset = CGSize(width: state.shadowOffsetX, height: state.shadowOffsetY)
 
-    if state.overflowHidden {
+    if let borderLayer {
+      borderLayer.fillColor = UIColor.clear.cgColor
+      borderLayer.strokeColor = Self.color(from: state.borderColor).cgColor
+      borderLayer.lineWidth = max(state.borderWidth, 0)
+      borderLayer.lineDashPattern = Self.dashPattern(
+        for: state.borderStyle,
+        width: borderLayer.lineWidth
+      )
+      borderLayer.lineCap = state.borderStyle == .dotted ? .round : .butt
+      borderLayer.isHidden = !drawsBorder
+    }
+
+    if clipsChildren, let clipMask {
       host.layer.mask = clipMask
     } else {
       clearHostMask()
     }
+    appliedState = state
+    appliedBounds = bounds
     CATransaction.commit()
+  }
+
+  private func makeLayer(zPosition: CGFloat, on host: UIView) -> CAShapeLayer {
+    let layer = CAShapeLayer()
+    layer.zPosition = zPosition
+    host.layer.addSublayer(layer)
+    return layer
   }
 
   private static func color(from processedColor: Double) -> UIColor {

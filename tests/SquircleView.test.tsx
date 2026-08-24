@@ -1,4 +1,5 @@
 import React from 'react'
+import { StyleSheet } from 'react-native'
 import TestRenderer, { act } from 'react-test-renderer'
 
 import { SquircleView } from '../src'
@@ -29,7 +30,10 @@ describe('SquircleView', () => {
     expect(native.props.bottomLeftRadius).toBe(24)
     expect(native.props.squircleBackgroundColor).not.toBe(0)
     expect(native.props.backgroundColor).toBeUndefined()
-    expect(native.props.style.backgroundColor).toBe('transparent')
+    expect(Array.isArray(native.props.style)).toBe(true)
+    expect(StyleSheet.flatten(native.props.style).backgroundColor).toBe(
+      'transparent'
+    )
     expect(native.props.testID).toBe('shape')
     expect(native.props.children).toBe('child')
   })

@@ -365,8 +365,6 @@ SquirclePaths createSquirclePaths(const SquircleGeometry& geometry, float border
 
   paths.borderCenter = createSquirclePath(insetGeometry(normalized, safeBorderWidth / 2));
   translate(paths.borderCenter, safeBorderWidth / 2);
-  paths.inner = createSquirclePath(insetGeometry(normalized, safeBorderWidth));
-  translate(paths.inner, safeBorderWidth);
   return paths;
 }
 

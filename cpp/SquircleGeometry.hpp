@@ -63,7 +63,6 @@ struct SquirclePath {
 struct SquirclePaths {
   SquirclePath outer;
   SquirclePath borderCenter;
-  SquirclePath inner;
 };
 
 [[nodiscard]] SquircleGeometry normalizeGeometry(const SquircleGeometry& geometry) noexcept;

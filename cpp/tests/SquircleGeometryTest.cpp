@@ -90,11 +90,9 @@ void testBorderPaths() {
   const auto paths = createSquirclePaths({120, 80, {32, 24, 16, 8}, 0.6f}, 4);
   expect(paths.outer.count > 0, "outer border path exists");
   expect(paths.borderCenter.count > 0, "center border path exists");
-  expect(paths.inner.count > 0, "inner border path exists");
 
   const auto noBorder = createSquirclePaths({120, 80, {32, 24, 16, 8}, 0.6f}, 0);
   expect(noBorder.borderCenter.count == 0, "zero-width border has no center path");
-  expect(noBorder.inner.count == 0, "zero-width border has no inner path");
 }
 
 void testRoundedRectFixture() {
@@ -120,12 +118,13 @@ void testNoOpUpdates() {
   auto layoutUpdate = geometry;
   layoutUpdate.width = 201;
   expect(cache.update(layoutUpdate, 2), "layout invalidates geometry");
-  expect(cache.update(geometry, 4), "border width invalidates inner geometry");
+  expect(cache.update(geometry, 4), "border width invalidates border geometry");
 
   const auto stats = SquircleInstrumentation::snapshot();
   expect(stats.cacheHits == 1, "no-op update records one cache hit");
   expect(stats.cacheMisses == 4, "changed updates record cache misses");
   expect(stats.geometryCalculations == 4, "only changed updates calculate geometry");
+  expect(stats.pathCreations == 8, "border updates create only rendered paths");
 }
 
 } // namespace

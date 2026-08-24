@@ -112,9 +112,10 @@ clips them with the generated squircle path.
 
 - Nitro batches native prop setters with `beforeUpdate` / `afterUpdate`.
 - One per-view C++ cache compares normalized geometry before doing corner math.
-- Outer, border-center, and inner paths are generated together in fixed-capacity
-  command buffers.
-- iOS reuses three `CAShapeLayer`s, one mask layer, and retained `CGPath`s.
+- Outer and border-center paths are generated together in fixed-capacity command
+  buffers.
+- iOS creates shape and mask layers only when needed, then reuses them with
+  retained `CGPath`s.
 - Android reuses `Path`, `Paint`, direct buffers, and its outline provider.
 - Neither renderer recalculates geometry during draw. Debug counters prove that
   unchanged/background-only updates create no new geometry; release builds

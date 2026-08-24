@@ -25,7 +25,6 @@ bool SquirclePathCache::update(const SquircleGeometry& geometry, float borderWid
 
   std::uint64_t createdPaths = paths_.outer.count > 0 ? 1 : 0;
   createdPaths += paths_.borderCenter.count > 0 ? 1 : 0;
-  createdPaths += paths_.inner.count > 0 ? 1 : 0;
   SquircleInstrumentation::recordCacheMiss();
   SquircleInstrumentation::recordGeometryCalculation(createdPaths);
   return true;

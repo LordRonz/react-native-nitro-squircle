@@ -28,8 +28,8 @@ Both implementations batch the generated property setters between
 `beforeUpdate()` and `afterUpdate()`. Platform UI state is only applied on its UI
 thread.
 
-`SquirclePathCache` owns normalized source geometry and the last outer,
-border-center, and inner command buffers. Exact comparison is safe here because
+`SquirclePathCache` owns normalized source geometry and the last outer and
+border-center command buffers. Exact comparison is safe here because
 it compares normalized source values, not independently recomputed floating
 point output. Background-only and identical updates hit the per-view cache and
 do not run corner math. There is intentionally no global cache.
@@ -41,9 +41,10 @@ through one direct `ByteBuffer` JNI call and decodes them into two retained
 `Path` instances. Neither renderer builds paths during drawing.
 
 On iOS, one transparent controller view is installed by the generated Nitro
-Fabric component. Three retained `CAShapeLayer`s and one retained mask are
-attached to the Fabric wrapper so normal children continue to work. Implicit
-Core Animation actions are disabled. On Android, a small `ReactViewManager`
+Fabric component. Background, border, shadow, and mask layers are created only
+when their styles require them, then retained for reuse on the Fabric wrapper so
+normal children continue to work. Implicit Core Animation actions are disabled.
+On Android, a small `ReactViewManager`
 compatibility adapter is necessary because Nitrogen 0.37 currently generates a
 `SimpleViewManager<View>`; the custom manager returns a `ReactViewGroup`, keeping
 normal child management while reusing Nitrogen's generated state updater.

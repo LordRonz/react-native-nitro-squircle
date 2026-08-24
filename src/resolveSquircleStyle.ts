@@ -14,7 +14,7 @@ import type {
 } from './specs/SquircleView.nitro'
 
 export interface ResolvedSquircleStyle {
-  hostStyle: ViewStyle
+  hostStyle: StyleProp<ViewStyle>
   nativeProps: SquircleNativeViewProps
 }
 
@@ -24,6 +24,43 @@ type ExtendedViewStyle = ViewStyle & {
 }
 
 const warnedFeatures = new Set<string>()
+
+const hostStyleOverrides: ExtendedViewStyle = {
+  backgroundColor: 'transparent',
+  borderColor: 'transparent',
+  borderBottomColor: 'transparent',
+  borderEndColor: 'transparent',
+  borderLeftColor: 'transparent',
+  borderRightColor: 'transparent',
+  borderStartColor: 'transparent',
+  borderTopColor: 'transparent',
+  borderRadius: 0,
+  borderBottomEndRadius: 0,
+  borderBottomLeftRadius: 0,
+  borderBottomRightRadius: 0,
+  borderBottomStartRadius: 0,
+  borderEndEndRadius: 0,
+  borderEndStartRadius: 0,
+  borderStartEndRadius: 0,
+  borderStartStartRadius: 0,
+  borderTopEndRadius: 0,
+  borderTopLeftRadius: 0,
+  borderTopRightRadius: 0,
+  borderTopStartRadius: 0,
+  overflow: 'visible',
+  outlineWidth: 0,
+  boxShadow: undefined,
+  backgroundImage: undefined,
+  experimental_backgroundImage: undefined,
+  ...(Platform.OS === 'ios'
+    ? {
+        shadowColor: 'transparent',
+        shadowOffset: undefined,
+        shadowOpacity: 0,
+        shadowRadius: 0,
+      }
+    : {}),
+}
 
 function warnUnsupported(feature: string, message: string): void {
   if (__DEV__ && !warnedFeatures.has(feature)) {
@@ -142,44 +179,6 @@ function resolveBorderColor(style: ViewStyle): number {
   return colors[0] ?? 0
 }
 
-function makeHostStyle(style: ExtendedViewStyle): ViewStyle {
-  const hostStyle: ExtendedViewStyle = {
-    ...style,
-    backgroundColor: 'transparent',
-    borderColor: 'transparent',
-    borderBottomColor: 'transparent',
-    borderEndColor: 'transparent',
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-    borderStartColor: 'transparent',
-    borderTopColor: 'transparent',
-    borderRadius: 0,
-    borderBottomEndRadius: 0,
-    borderBottomLeftRadius: 0,
-    borderBottomRightRadius: 0,
-    borderBottomStartRadius: 0,
-    borderEndEndRadius: 0,
-    borderEndStartRadius: 0,
-    borderStartEndRadius: 0,
-    borderStartStartRadius: 0,
-    borderTopEndRadius: 0,
-    borderTopLeftRadius: 0,
-    borderTopRightRadius: 0,
-    borderTopStartRadius: 0,
-    overflow: 'visible',
-    shadowColor: Platform.OS === 'ios' ? 'transparent' : style.shadowColor,
-    shadowOffset: Platform.OS === 'ios' ? undefined : style.shadowOffset,
-    shadowOpacity: Platform.OS === 'ios' ? 0 : style.shadowOpacity,
-    shadowRadius: Platform.OS === 'ios' ? 0 : style.shadowRadius,
-    outlineWidth: 0,
-    boxShadow: undefined,
-    backgroundImage: undefined,
-    experimental_backgroundImage: undefined,
-  }
-
-  return hostStyle
-}
-
 export function resolveSquircleStyle(
   input: StyleProp<ViewStyle>,
   cornerSmoothing: number
@@ -215,7 +214,7 @@ export function resolveSquircleStyle(
   const borderStyle = (style.borderStyle ?? 'solid') as SquircleBorderStyle
 
   return {
-    hostStyle: makeHostStyle(style),
+    hostStyle: [input, hostStyleOverrides],
     nativeProps: {
       cornerSmoothing: finiteNumber(cornerSmoothing, 0.6),
       squircleBackgroundColor: nativeColor(
