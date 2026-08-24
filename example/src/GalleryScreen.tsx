@@ -1,5 +1,13 @@
-import React from 'react'
-import { ScrollView, StyleSheet, Text, View } from 'react-native'
+import React, { useState } from 'react'
+import {
+  LayoutChangeEvent,
+  NativeSyntheticEvent,
+  NativeTouchEvent,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native'
 import { SquircleView } from 'react-native-nitro-squircle'
 
 const smoothingValues = [0, 0.2, 0.4, 0.6, 0.8, 1]
@@ -16,20 +24,126 @@ function Section({
   )
 }
 
+function Slider({
+  label,
+  value,
+  min,
+  max,
+  step,
+  displayValue,
+  onChange,
+}: {
+  label: string
+  value: number
+  min: number
+  max: number
+  step: number
+  displayValue: string
+  onChange: (value: number) => void
+}) {
+  const [width, setWidth] = useState(0)
+  const progress = (value - min) / (max - min)
+  const fillStyle = { width: `${progress * 100}%` as `${number}%` }
+  const thumbStyle = { left: width > 0 ? progress * width - 10 : 0 }
+
+  const update = (locationX: number) => {
+    const next =
+      min + (Math.max(0, Math.min(locationX, width)) / width) * (max - min)
+    onChange(Math.round(next / step) * step)
+  }
+
+  const handleTouch = (event: NativeSyntheticEvent<NativeTouchEvent>) => {
+    if (width > 0) update(event.nativeEvent.locationX)
+  }
+
+  const handleLayout = (event: LayoutChangeEvent) => {
+    setWidth(event.nativeEvent.layout.width)
+  }
+
+  return (
+    <View style={styles.control}>
+      <View style={styles.controlHeader}>
+        <Text style={styles.controlLabel}>{label}</Text>
+        <Text style={styles.controlValue}>{displayValue}</Text>
+      </View>
+      <View
+        accessible
+        accessibilityRole="adjustable"
+        accessibilityLabel={label}
+        accessibilityValue={{ min, max, now: value }}
+        accessibilityActions={[{ name: 'decrement' }, { name: 'increment' }]}
+        onAccessibilityAction={({ nativeEvent }) => {
+          if (nativeEvent.actionName === 'increment') {
+            onChange(Math.min(max, value + step))
+          } else if (nativeEvent.actionName === 'decrement') {
+            onChange(Math.max(min, value - step))
+          }
+        }}
+        onLayout={handleLayout}
+        onStartShouldSetResponder={() => true}
+        onMoveShouldSetResponder={() => true}
+        onResponderGrant={handleTouch}
+        onResponderMove={handleTouch}
+        style={styles.sliderHitArea}
+      >
+        <View style={styles.sliderTrack}>
+          <View style={[styles.sliderFill, fillStyle]} />
+          <View style={[styles.sliderThumb, thumbStyle]} />
+        </View>
+      </View>
+    </View>
+  )
+}
+
 export function GalleryScreen() {
+  const [radius, setRadius] = useState(48)
+  const [smoothing, setSmoothing] = useState(0.6)
+
   return (
     <ScrollView contentContainerStyle={styles.content}>
+      <Section title="Playground">
+        <View style={styles.playground}>
+          <SquircleView
+            cornerSmoothing={smoothing}
+            style={[styles.preview, { borderRadius: radius }]}
+          >
+            <Text style={styles.previewIcon}>✦</Text>
+            <Text style={styles.previewTitle}>Squircle</Text>
+          </SquircleView>
+          <View style={styles.controls}>
+            <Slider
+              label="Corner radius"
+              value={radius}
+              min={0}
+              max={100}
+              step={1}
+              displayValue={`${radius} px`}
+              onChange={setRadius}
+            />
+            <Slider
+              label="Corner smoothing"
+              value={smoothing}
+              min={0}
+              max={1}
+              step={0.01}
+              displayValue={smoothing.toFixed(2)}
+              onChange={setSmoothing}
+            />
+          </View>
+        </View>
+      </Section>
+
       <Section title="Smoothing spectrum">
         <View style={styles.grid}>
-          {smoothingValues.map((smoothing) => (
-            <View key={smoothing} style={styles.sampleWrap}>
+          {smoothingValues.map((smoothingValue) => (
+            <View key={smoothingValue} style={styles.sampleWrap}>
               <SquircleView
-                cornerSmoothing={smoothing}
+                cornerSmoothing={smoothingValue}
                 style={[styles.sample, styles.samplePurple]}
               >
                 <Text style={styles.sampleIcon}>✦</Text>
               </SquircleView>
-              <Text style={styles.caption}>{smoothing.toFixed(1)}</Text>
+              <Text style={styles.caption}>{smoothingValue.toFixed(1)}</Text>
             </View>
           ))}
         </View>
@@ -75,6 +189,70 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 0.4,
+  },
+  playground: {
+    backgroundColor: '#18181b',
+    borderRadius: 24,
+    padding: 20,
+    gap: 24,
+  },
+  preview: {
+    width: 220,
+    height: 220,
+    alignSelf: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#6366f1',
+    borderColor: '#a5b4fc',
+    borderWidth: 2,
+    shadowColor: '#6366f1',
+    shadowOpacity: 0.45,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 12 },
+    elevation: 10,
+  },
+  previewIcon: { color: '#eef2ff', fontSize: 34 },
+  previewTitle: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: '900',
+    marginTop: 6,
+  },
+  controls: { gap: 16 },
+  control: { gap: 7 },
+  controlHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  controlLabel: { color: '#d4d4d8', fontSize: 12, fontWeight: '700' },
+  controlValue: {
+    color: '#a5b4fc',
+    fontSize: 12,
+    fontWeight: '800',
+    fontVariant: ['tabular-nums'],
+  },
+  sliderHitArea: { height: 30, justifyContent: 'center' },
+  sliderTrack: {
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: '#3f3f46',
+  },
+  sliderFill: {
+    position: 'absolute',
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: '#818cf8',
+  },
+  sliderThumb: {
+    position: 'absolute',
+    top: -8,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#fafafa',
+    borderWidth: 3,
+    borderColor: '#6366f1',
   },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   sampleWrap: { alignItems: 'center', gap: 7 },
