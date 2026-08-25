@@ -32,6 +32,7 @@ internal class SquircleRenderView(context: Context) : ReactViewGroup(context) {
   private val backgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
   private val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
   private var state = SquircleRenderState()
+  private var appliedState: SquircleRenderState? = null
 
   init {
     setWillNotDraw(false)
@@ -43,6 +44,7 @@ internal class SquircleRenderView(context: Context) : ReactViewGroup(context) {
   }
 
   fun apply(nextState: SquircleRenderState) {
+    if (appliedState == nextState) return
     state = nextState
     backgroundPaint.color = nextState.backgroundColor.toLong().toInt()
     borderPaint.color = nextState.borderColor.toLong().toInt()
@@ -59,11 +61,13 @@ internal class SquircleRenderView(context: Context) : ReactViewGroup(context) {
       }
     }
     updateGeometry()
+    appliedState = nextState
     invalidate()
   }
 
   fun reset() {
     state = SquircleRenderState()
+    appliedState = null
     geometry.reset()
     backgroundPaint.color = 0
     borderPaint.color = 0

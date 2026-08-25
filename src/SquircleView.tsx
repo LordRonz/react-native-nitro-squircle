@@ -1,4 +1,4 @@
-import React, { forwardRef, type ComponentRef } from 'react'
+import React, { forwardRef, useMemo, type ComponentRef } from 'react'
 
 import { NativeSquircleView } from './SquircleNativeView'
 import { resolveSquircleStyle } from './resolveSquircleStyle'
@@ -13,7 +13,10 @@ export const SquircleView = forwardRef<
   { cornerSmoothing = 0.6, style, ...viewProps },
   ref
 ) {
-  const resolved = resolveSquircleStyle(style, cornerSmoothing)
+  const resolved = useMemo(
+    () => resolveSquircleStyle(style, cornerSmoothing),
+    [style, cornerSmoothing]
+  )
 
   return (
     <NativeSquircleView

@@ -107,6 +107,7 @@ the squircle as the native outline.
 
 Children remain normal Fabric descendants; `overflow: 'hidden'` or `'scroll'`
 clips them with the generated squircle path.
+On Android this uses `Canvas.clipPath`, whose clip edge is not paint-antialiased.
 
 ## Performance architecture
 

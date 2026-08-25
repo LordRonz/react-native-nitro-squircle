@@ -63,4 +63,22 @@ describe('SquircleView', () => {
       native.props.cornerSmoothing,
     ]).toEqual([1, 2, 3, 4, 1])
   })
+
+  it('reuses resolved props when its style inputs are unchanged', () => {
+    const style = { backgroundColor: '#112233', borderRadius: 24 }
+    let renderer: TestRenderer.ReactTestRenderer
+    act(() => {
+      renderer = TestRenderer.create(<SquircleView style={style} />)
+    })
+
+    const firstStyle =
+      renderer!.root.findByType('SquircleNativeView').props.style
+    act(() => {
+      renderer!.update(<SquircleView style={style} />)
+    })
+
+    expect(renderer!.root.findByType('SquircleNativeView').props.style).toBe(
+      firstStyle
+    )
+  })
 })

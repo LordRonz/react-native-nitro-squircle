@@ -82,7 +82,11 @@ final class SquircleRenderView: UIView {
   }
 
   private func attachLayersIfNeeded() {
-    guard let host = superview, host !== hostView else { return }
+    guard let host = superview else {
+      detachLayers()
+      return
+    }
+    guard host !== hostView else { return }
     detachLayers()
     hostView = host
     appliedState = nil

@@ -103,6 +103,9 @@ void testRoundedRectFixture() {
   expect(path.commands[1].type == PathCommandType::ArcTo, "fixture uses an arc for the top-right corner");
   expect(path.commands[1].point1 == Point{80, 20}, "top-right arc center is stable");
   expect(path.commands[path.count - 1].type == PathCommandType::Close, "fixture closes the path");
+
+  const auto smoothed = createSquirclePath({100, 100, {20, 20, 20, 20}, 0.6f});
+  expect(smoothed.count == SquirclePath::maxCommands, "the fixed buffer fits the maximum command path exactly");
 }
 
 void testNoOpUpdates() {
