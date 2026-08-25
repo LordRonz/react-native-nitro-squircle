@@ -2,6 +2,14 @@
   "name": "react-native-nitro-squircle",
   "version": "0.0.1",
   "description": "A native Figma-style squircle View for React Native powered by Nitro Modules.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LordRonz/react-native-nitro-squircle.git"
+  },
+  "bugs": {
+    "url": "https://github.com/LordRonz/react-native-nitro-squircle/issues"
+  },
+  "homepage": "https://github.com/LordRonz/react-native-nitro-squircle#readme",
   "main": "lib/index",
   "module": "lib/index",
   "types": "lib/index.d.ts",
@@ -33,6 +41,8 @@
   ],
   "scripts": {
     "build": "tsc",
+    "prepack": "npm run build",
+    "prepublishOnly": "npm run lint-ci && npm run test && npm run format:check",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf android/build node_modules/**/android/build lib",
     "lint": "eslint \"src/**/*.{ts,tsx}\" \"tests/**/*.{ts,tsx}\" \"example/src/**/*.{ts,tsx}\" --fix",
@@ -53,8 +63,8 @@
   ],
   "author": "Aaron",
   "license": "MIT",
-  "homepage": "https://www.npmjs.com/package/react-native-nitro-squircle",
   "publishConfig": {
+    "access": "public",
     "registry": "https://registry.npmjs.org/"
   },
   "devDependencies": {
