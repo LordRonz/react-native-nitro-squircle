@@ -74,7 +74,11 @@ internal class HybridSquircleNativeView(context: ThemedReactContext) :
       state.copyFrom(SquircleRenderState())
       batching = false
     }
-    view.post { view.reset() }
+    if (Looper.myLooper() == Looper.getMainLooper()) {
+      view.reset()
+    } else {
+      view.post { view.reset() }
+    }
   }
 
   override fun onDropView() {
