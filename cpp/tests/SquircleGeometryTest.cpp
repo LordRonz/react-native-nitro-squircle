@@ -95,6 +95,31 @@ void testBorderPaths() {
   expect(noBorder.borderCenter.count == 0, "zero-width border has no center path");
 }
 
+void testMixedCornerFixture() {
+  const auto path = createSquirclePath({120, 80, {32, 0, 16, 0}, 0});
+  constexpr std::array<Point, 2> expectedArcCenters = {{{104, 64}, {32, 32}}};
+  std::size_t arcIndex = 0;
+  bool reachesSharpBottomLeft = false;
+
+  expect(path.count == 9, "zero-radius corners add no redundant commands");
+  expect(path.commands.front().type == PathCommandType::MoveTo, "mixed fixture starts with move");
+  expect(path.commands.front().point1 == Point{120, 0}, "zero top-right radius starts at the sharp corner");
+  for (std::size_t index = 0; index < path.count; ++index) {
+    const auto& command = path.commands[index];
+    if (command.type == PathCommandType::LineTo && command.point1 == Point{0, 80}) {
+      reachesSharpBottomLeft = true;
+    }
+    if (command.type == PathCommandType::ArcTo) {
+      expect(arcIndex < expectedArcCenters.size(), "zero-radius corners do not create arcs");
+      expect(command.point1 == expectedArcCenters[arcIndex], "mixed-radius arc center is stable");
+      ++arcIndex;
+    }
+  }
+  expect(arcIndex == expectedArcCenters.size(), "only positive-radius corners create arcs");
+  expect(reachesSharpBottomLeft, "zero bottom-left radius reaches the sharp corner");
+  expect(path.commands[path.count - 1].type == PathCommandType::Close, "mixed fixture closes the path");
+}
+
 void testRoundedRectFixture() {
   const auto path = createSquirclePath({100, 100, {20, 20, 20, 20}, 0});
   expect(path.count == 9, "smoothing zero uses four exact circular arcs");
@@ -137,6 +162,7 @@ int main() {
   testRequiredMatrix();
   testEmptyShapes();
   testBorderPaths();
+  testMixedCornerFixture();
   testRoundedRectFixture();
   testNoOpUpdates();
   std::cout << "Squircle geometry tests passed\n";

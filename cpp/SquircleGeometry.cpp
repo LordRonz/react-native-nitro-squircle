@@ -129,7 +129,6 @@ bool hasCurve(const CornerPathParams& params) noexcept {
 
 void appendTopRight(SquirclePath& path, float width, const CornerPathParams& params) {
   if (params.radius <= 0) {
-    path.push(lineTo(width, 0));
     return;
   }
 
@@ -153,7 +152,6 @@ void appendTopRight(SquirclePath& path, float width, const CornerPathParams& par
 
 void appendBottomRight(SquirclePath& path, float width, float height, const CornerPathParams& params) {
   if (params.radius <= 0) {
-    path.push(lineTo(width, height));
     return;
   }
 
@@ -177,7 +175,6 @@ void appendBottomRight(SquirclePath& path, float width, float height, const Corn
 
 void appendBottomLeft(SquirclePath& path, float height, const CornerPathParams& params) {
   if (params.radius <= 0) {
-    path.push(lineTo(0, height));
     return;
   }
 
@@ -201,7 +198,6 @@ void appendBottomLeft(SquirclePath& path, float height, const CornerPathParams& 
 
 void appendTopLeft(SquirclePath& path, const CornerPathParams& params) {
   if (params.radius <= 0) {
-    path.push(lineTo(0, 0));
     return;
   }
 
@@ -330,19 +326,23 @@ SquirclePath createSquirclePath(const SquircleGeometry& sourceGeometry) {
     return path;
   }
 
-  std::array<float, 4> budgets{};
-  if (geometry.radii.topLeft == geometry.radii.topRight &&
+  const bool uniformRadii = geometry.radii.topLeft == geometry.radii.topRight &&
       geometry.radii.topRight == geometry.radii.bottomRight &&
-      geometry.radii.bottomRight == geometry.radii.bottomLeft) {
+      geometry.radii.bottomRight == geometry.radii.bottomLeft;
+  std::array<float, 4> budgets{};
+  if (uniformRadii) {
     budgets.fill(std::min(geometry.width, geometry.height) / 2);
   } else {
     budgets = cornerBudgets(geometry);
   }
 
   const auto topLeft = cornerPathParams(geometry.radii.topLeft, geometry.smoothing, budgets[0]);
-  const auto topRight = cornerPathParams(geometry.radii.topRight, geometry.smoothing, budgets[1]);
-  const auto bottomRight = cornerPathParams(geometry.radii.bottomRight, geometry.smoothing, budgets[2]);
-  const auto bottomLeft = cornerPathParams(geometry.radii.bottomLeft, geometry.smoothing, budgets[3]);
+  const auto topRight =
+      uniformRadii ? topLeft : cornerPathParams(geometry.radii.topRight, geometry.smoothing, budgets[1]);
+  const auto bottomRight =
+      uniformRadii ? topLeft : cornerPathParams(geometry.radii.bottomRight, geometry.smoothing, budgets[2]);
+  const auto bottomLeft =
+      uniformRadii ? topLeft : cornerPathParams(geometry.radii.bottomLeft, geometry.smoothing, budgets[3]);
 
   path.push(moveTo(geometry.width - topRight.p, 0));
   appendTopRight(path, geometry.width, topRight);
