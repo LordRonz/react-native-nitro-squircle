@@ -7,27 +7,35 @@
 
 namespace margelo::nitro::nitrosquircle {
 
-bool SquirclePathCache::update(const SquircleGeometry& geometry, float borderWidth) {
+std::uint8_t SquirclePathCache::update(const SquircleGeometry& geometry, float borderWidth) {
   const auto normalized = normalizeGeometry(geometry);
   const float safeBorderWidth = std::isfinite(borderWidth)
       ? std::clamp(borderWidth, 0.0f, std::min(normalized.width, normalized.height) / 2)
       : 0;
 
-  if (hasValue_ && geometry_ == normalized && borderWidth_ == safeBorderWidth) {
+  const bool updateOuter = !hasValue_ || geometry_ != normalized;
+  if (!updateOuter && borderWidth_ == safeBorderWidth) {
     SquircleInstrumentation::recordCacheHit();
-    return false;
+    return 0;
   }
 
+  const bool updateBorder = borderWidth_ != safeBorderWidth || (updateOuter && safeBorderWidth > 0);
+  std::uint64_t createdPaths = 0;
+  if (updateOuter) {
+    paths_.outer = detail::createNormalizedSquirclePath(normalized);
+    createdPaths += paths_.outer.count > 0 ? 1 : 0;
+  }
+  if (updateBorder) {
+    paths_.borderCenter = detail::createNormalizedBorderPath(normalized, safeBorderWidth);
+    createdPaths += paths_.borderCenter.count > 0 ? 1 : 0;
+  }
   geometry_ = normalized;
   borderWidth_ = safeBorderWidth;
-  paths_ = createSquirclePaths(normalized, safeBorderWidth);
   hasValue_ = true;
 
-  std::uint64_t createdPaths = paths_.outer.count > 0 ? 1 : 0;
-  createdPaths += paths_.borderCenter.count > 0 ? 1 : 0;
   SquircleInstrumentation::recordCacheMiss();
   SquircleInstrumentation::recordGeometryCalculation(createdPaths);
-  return true;
+  return (updateOuter ? outerChanged : 0) | (updateBorder ? borderChanged : 0);
 }
 
 void SquirclePathCache::reset() noexcept {

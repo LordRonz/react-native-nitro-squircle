@@ -1,0 +1,36 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "categories": {
+    "correctness": "error"
+  },
+  "plugins": ["eslint", "oxc", "unicorn", "typescript", "react", "jest"],
+  "globals": {
+    "__DEV__": "readonly"
+  },
+  "rules": {
+    "no-unused-vars": [
+      "error",
+      {
+        "args": "after-used",
+        "argsIgnorePattern": "^_",
+        "destructuredArrayIgnorePattern": "^_"
+      }
+    ],
+    "no-shadow": "warn",
+    "react/exhaustive-deps": "error",
+    "react/rules-of-hooks": "error",
+    "react/self-closing-comp": "warn",
+    "jest/no-disabled-tests": "warn",
+    "jest/no-focused-tests": "warn",
+    "jest/no-identical-title": "warn",
+    "jest/valid-expect": "warn"
+  },
+  "overrides": [
+    {
+      "files": ["tests/**/*.{ts,tsx}"],
+      "env": {
+        "jest": true
+      }
+    }
+  ]
+}

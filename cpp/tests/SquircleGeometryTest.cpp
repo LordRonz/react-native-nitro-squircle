@@ -155,6 +155,62 @@ void testNoOpUpdates() {
   expect(stats.pathCreations == 8, "border updates create only rendered paths");
 }
 
+void testIndependentPathUpdates() {
+  SquircleInstrumentation::reset();
+  SquirclePathCache cache;
+  SquircleGeometry geometry{200, 100, {32, 24, 16, 8}, 0.6f};
+  constexpr auto both = SquirclePathCache::outerChanged | SquirclePathCache::borderChanged;
+  expect(cache.update(geometry, 2) == both, "first bordered update creates both paths");
+  const auto outer = cache.paths().outer;
+  const auto border = cache.paths().borderCenter;
+
+  expect(cache.update(geometry, 4) == SquirclePathCache::borderChanged, "border width only invalidates the border");
+  expect(cache.paths().outer == outer, "border width preserves the outer path");
+  expect(!(cache.paths().borderCenter == border), "border width changes the border path");
+  expect(SquircleInstrumentation::snapshot().pathCreations == 3, "border-only update creates exactly one path");
+  expect(cache.update(geometry, 0) == SquirclePathCache::borderChanged, "removing the border invalidates it");
+  expect(cache.paths().borderCenter.count == 0, "removing the border clears its path");
+  expect(SquircleInstrumentation::snapshot().pathCreations == 3, "clearing the border creates no path");
+
+  geometry.width += 1;
+  expect(cache.update(geometry, 0) == SquirclePathCache::outerChanged, "borderless resize only invalidates the outer path");
+  expect(cache.update(geometry, 500) == SquirclePathCache::borderChanged, "adding a clamped border preserves the outer path");
+  expect(cache.update(geometry, 1000) == 0, "equivalent clamped border widths are a no-op");
+  geometry.height = 0;
+  expect(cache.update(geometry, 4) == both, "empty bounds invalidate both existing paths");
+  expect(cache.paths().outer.count == 0 && cache.paths().borderCenter.count == 0, "empty bounds clear both paths");
+  geometry.height = 100;
+  expect(cache.update(geometry, 4) == both, "restoring bounds recreates both paths");
+  cache.reset();
+  expect(cache.update(geometry, 4) == both, "recycling invalidates both paths");
+}
+
+void testCachedGeometryMatchesPublicEntryPoints() {
+  const float nan = std::numeric_limits<float>::quiet_NaN();
+  const float infinity = std::numeric_limits<float>::infinity();
+  const SquircleGeometry geometries[] = {
+      {200, 100, {24, 24, 24, 24}, 0.6f},
+      {100.25f, 50.5f, {200, 32, 0, 8}, 1},
+      {24, 400, {200, 100, 50, 25}, 0},
+      {0.5f, 0.75f, {1, 2, 4, 8}, 0.2f},
+      {100, 50, {-1, nan, infinity, 200}, nan},
+      {0, 100, {20, 20, 20, 20}, 0.6f},
+      {-10, infinity, {20, 20, 20, 20}, 4},
+  };
+  const float widths[] = {0, 1, 4, 200, -1, nan, infinity};
+  SquirclePathCache cache;
+  for (const auto& geometry : geometries) {
+    for (float width : widths) {
+      (void)cache.update(geometry, width);
+      const auto expected = createSquirclePaths(geometry, width);
+      expect(cache.paths().outer == expected.outer, "cached outer path matches the validated public entry point");
+      expect(cache.paths().borderCenter == expected.borderCenter, "cached border path matches the validated public entry point");
+      expect(isFinite(expected.outer) && isFinite(expected.borderCenter), "normalized paths remain finite");
+      expect(cache.update(geometry, width) == 0, "normalized repeat is a no-op, including invalid inputs");
+    }
+  }
+}
+
 } // namespace
 
 int main() {
@@ -165,5 +221,7 @@ int main() {
   testMixedCornerFixture();
   testRoundedRectFixture();
   testNoOpUpdates();
+  testIndependentPathUpdates();
+  testCachedGeometryMatchesPublicEntryPoints();
   std::cout << "Squircle geometry tests passed\n";
 }

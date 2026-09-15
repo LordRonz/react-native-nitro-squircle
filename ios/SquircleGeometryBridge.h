@@ -5,9 +5,14 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+typedef NS_OPTIONS(NSUInteger, RNSquirclePathChanges) {
+  RNSquirclePathChangesOuter = 1,
+  RNSquirclePathChangesBorder = 2,
+};
+
 @interface RNSquircleGeometryEngine : NSObject
 
-- (BOOL)updateWithWidth:(CGFloat)width
+- (RNSquirclePathChanges)updateWithWidth:(CGFloat)width
                  height:(CGFloat)height
           topLeftRadius:(CGFloat)topLeftRadius
          topRightRadius:(CGFloat)topRightRadius

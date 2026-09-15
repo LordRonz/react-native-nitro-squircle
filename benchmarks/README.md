@@ -29,6 +29,24 @@ Android. Debug builds also display C++ geometry calculations, path creations,
 cache hits, and cache misses for this package. Release instrumentation returns
 zero and has no atomic-counter overhead.
 
-No benchmark results are checked into this repository yet. Populate
-`benchmarks/results.md` only with reproducible measurements from the protocol
-above, including cases where the reference implementation wins.
+No device benchmark results are checked into this repository yet. Populate
+the device table in `benchmarks/results.md` only with reproducible measurements
+from the protocol above, including cases where the reference implementation wins.
+
+## C++ microbenchmark
+
+The standalone benchmark isolates the geometry cache from React, JNI, Core
+Graphics, and drawing. It reports the median of seven 200,000-update trials
+after one warm-up, with release instrumentation disabled:
+
+```sh
+rtk proxy clang++ -O3 -DNDEBUG -std=c++20 -Icpp \
+  benchmarks/SquircleBenchmark.cpp cpp/SquircleGeometry.cpp \
+  cpp/SquirclePathCache.cpp cpp/SquircleInstrumentation.cpp \
+  -o /tmp/nitro-squircle-bench
+rtk proxy /tmp/nitro-squircle-bench
+```
+
+Compare both revisions using the same harness, compiler, flags, and machine.
+These timings measure C++ CPU work; use the device protocol above to establish
+an application frame-time or memory improvement.

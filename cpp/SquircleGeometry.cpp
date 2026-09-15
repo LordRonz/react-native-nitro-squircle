@@ -294,9 +294,9 @@ SquircleGeometry normalizeGeometry(const SquircleGeometry& geometry) noexcept {
   return normalized;
 }
 
-SquircleGeometry insetGeometry(const SquircleGeometry& geometry, float inset) noexcept {
-  const auto outer = normalizeGeometry(geometry);
-  const float safeInset = std::clamp(finiteOrZero(inset), 0.0f, std::min(outer.width, outer.height) / 2);
+namespace {
+
+SquircleGeometry insetNormalizedGeometry(const SquircleGeometry& outer, float safeInset) noexcept {
   return normalizeGeometry({
       .width = std::max(outer.width - 2 * safeInset, 0.0f),
       .height = std::max(outer.height - 2 * safeInset, 0.0f),
@@ -310,8 +310,15 @@ SquircleGeometry insetGeometry(const SquircleGeometry& geometry, float inset) no
   });
 }
 
-SquirclePath createSquirclePath(const SquircleGeometry& sourceGeometry) {
-  const auto geometry = normalizeGeometry(sourceGeometry);
+} // namespace
+
+SquircleGeometry insetGeometry(const SquircleGeometry& geometry, float inset) noexcept {
+  const auto outer = normalizeGeometry(geometry);
+  const float safeInset = std::clamp(finiteOrZero(inset), 0.0f, std::min(outer.width, outer.height) / 2);
+  return insetNormalizedGeometry(outer, safeInset);
+}
+
+SquirclePath detail::createNormalizedSquirclePath(const SquircleGeometry& geometry) {
   SquirclePath path;
   if (geometry.width <= 0 || geometry.height <= 0) {
     return path;
@@ -356,17 +363,27 @@ SquirclePath createSquirclePath(const SquircleGeometry& sourceGeometry) {
   return path;
 }
 
-SquirclePaths createSquirclePaths(const SquircleGeometry& geometry, float borderWidth) {
-  const auto normalized = normalizeGeometry(geometry);
-  SquirclePaths paths{.outer = createSquirclePath(normalized)};
-  const float safeBorderWidth = std::clamp(finiteOrZero(borderWidth), 0.0f, std::min(normalized.width, normalized.height) / 2);
-  if (safeBorderWidth <= 0) {
-    return paths;
+SquirclePath detail::createNormalizedBorderPath(const SquircleGeometry& geometry, float borderWidth) {
+  if (borderWidth <= 0) {
+    return {};
   }
 
-  paths.borderCenter = createSquirclePath(insetGeometry(normalized, safeBorderWidth / 2));
-  translate(paths.borderCenter, safeBorderWidth / 2);
-  return paths;
+  auto path = createNormalizedSquirclePath(insetNormalizedGeometry(geometry, borderWidth / 2));
+  translate(path, borderWidth / 2);
+  return path;
+}
+
+SquirclePath createSquirclePath(const SquircleGeometry& geometry) {
+  return detail::createNormalizedSquirclePath(normalizeGeometry(geometry));
+}
+
+SquirclePaths createSquirclePaths(const SquircleGeometry& geometry, float borderWidth) {
+  const auto normalized = normalizeGeometry(geometry);
+  const float safeBorderWidth = std::clamp(finiteOrZero(borderWidth), 0.0f, std::min(normalized.width, normalized.height) / 2);
+  return {
+      .outer = detail::createNormalizedSquirclePath(normalized),
+      .borderCenter = detail::createNormalizedBorderPath(normalized, safeBorderWidth),
+  };
 }
 
 } // namespace margelo::nitro::nitrosquircle

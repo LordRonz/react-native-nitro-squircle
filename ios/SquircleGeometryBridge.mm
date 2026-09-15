@@ -69,7 +69,7 @@ CGPathRef _Nullable createCGPath(const SquirclePath& source) {
   }
 }
 
-- (BOOL)updateWithWidth:(CGFloat)width
+- (RNSquirclePathChanges)updateWithWidth:(CGFloat)width
                  height:(CGFloat)height
           topLeftRadius:(CGFloat)topLeftRadius
          topRightRadius:(CGFloat)topRightRadius
@@ -89,19 +89,20 @@ CGPathRef _Nullable createCGPath(const SquirclePath& source) {
       static_cast<float>(smoothing),
   };
 
-  if (!_cache.update(geometry, static_cast<float>(borderWidth))) {
-    return NO;
+  const auto changes = _cache.update(geometry, static_cast<float>(borderWidth));
+  if (changes & SquirclePathCache::outerChanged) {
+    if (_outerPath != nil) {
+      CGPathRelease(_outerPath);
+    }
+    _outerPath = createCGPath(_cache.paths().outer);
   }
-
-  if (_outerPath != nil) {
-    CGPathRelease(_outerPath);
+  if (changes & SquirclePathCache::borderChanged) {
+    if (_borderCenterPath != nil) {
+      CGPathRelease(_borderCenterPath);
+    }
+    _borderCenterPath = createCGPath(_cache.paths().borderCenter);
   }
-  if (_borderCenterPath != nil) {
-    CGPathRelease(_borderCenterPath);
-  }
-  _outerPath = createCGPath(_cache.paths().outer);
-  _borderCenterPath = createCGPath(_cache.paths().borderCenter);
-  return YES;
+  return static_cast<RNSquirclePathChanges>(changes);
 }
 
 - (CGPathRef _Nullable)outerPath {

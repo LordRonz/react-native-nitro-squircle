@@ -96,7 +96,7 @@ Java_com_margelo_nitro_nitrosquircle_SquircleGeometryBridge_nativeUpdate(
     return 0;
   }
 
-  const bool changed = cache->update(
+  const auto changes = cache->update(
       {
           .width = width,
           .height = height,
@@ -105,12 +105,12 @@ Java_com_margelo_nitro_nitrosquircle_SquircleGeometryBridge_nativeUpdate(
       },
       borderWidth);
   const auto& paths = cache->paths();
-  if (changed && (!writePath(env, outerBuffer, paths.outer) ||
-                  !writePath(env, borderBuffer, paths.borderCenter))) {
+  if (((changes & SquirclePathCache::outerChanged) && !writePath(env, outerBuffer, paths.outer)) ||
+      ((changes & SquirclePathCache::borderChanged) && !writePath(env, borderBuffer, paths.borderCenter))) {
     return 0;
   }
 
   return static_cast<jlong>(paths.outer.count) |
       (static_cast<jlong>(paths.borderCenter.count) << 8) |
-      (changed ? (static_cast<jlong>(1) << 16) : 0);
+      (static_cast<jlong>(changes) << 16);
 }

@@ -45,22 +45,36 @@ internal class SquircleRenderView(context: Context) : ReactViewGroup(context) {
 
   fun apply(nextState: SquircleRenderState) {
     if (appliedState == nextState) return
+    val previous = appliedState
     state = nextState
-    backgroundPaint.color = nextState.backgroundColor.toLong().toInt()
-    borderPaint.color = nextState.borderColor.toLong().toInt()
-    borderPaint.strokeWidth = dp(nextState.borderWidth)
-    borderPaint.strokeCap =
-      if (nextState.borderStyle == SquircleBorderStyle.DOTTED) Paint.Cap.ROUND else Paint.Cap.BUTT
-    borderPaint.pathEffect = if (borderPaint.strokeWidth <= 0) {
-      null
-    } else {
-      when (nextState.borderStyle) {
-        SquircleBorderStyle.SOLID -> null
-        SquircleBorderStyle.DASHED -> DashPathEffect(floatArrayOf(borderPaint.strokeWidth * 3, borderPaint.strokeWidth * 2), 0f)
-        SquircleBorderStyle.DOTTED -> DashPathEffect(floatArrayOf(0f, borderPaint.strokeWidth * 2), 0f)
+    if (previous?.backgroundColor != nextState.backgroundColor) {
+      backgroundPaint.color = nextState.backgroundColor.toLong().toInt()
+    }
+    if (previous?.borderColor != nextState.borderColor) {
+      borderPaint.color = nextState.borderColor.toLong().toInt()
+    }
+    if (previous?.borderWidth != nextState.borderWidth || previous?.borderStyle != nextState.borderStyle) {
+      borderPaint.strokeWidth = dp(nextState.borderWidth)
+      borderPaint.strokeCap =
+        if (nextState.borderStyle == SquircleBorderStyle.DOTTED) Paint.Cap.ROUND else Paint.Cap.BUTT
+      borderPaint.pathEffect = if (borderPaint.strokeWidth <= 0) {
+        null
+      } else {
+        when (nextState.borderStyle) {
+          SquircleBorderStyle.SOLID -> null
+          SquircleBorderStyle.DASHED -> DashPathEffect(floatArrayOf(borderPaint.strokeWidth * 3, borderPaint.strokeWidth * 2), 0f)
+          SquircleBorderStyle.DOTTED -> DashPathEffect(floatArrayOf(0f, borderPaint.strokeWidth * 2), 0f)
+        }
       }
     }
-    updateGeometry()
+    if (previous?.cornerSmoothing != nextState.cornerSmoothing ||
+        previous?.topLeftRadius != nextState.topLeftRadius ||
+        previous?.topRightRadius != nextState.topRightRadius ||
+        previous?.bottomRightRadius != nextState.bottomRightRadius ||
+        previous?.bottomLeftRadius != nextState.bottomLeftRadius ||
+        previous?.borderWidth != nextState.borderWidth) {
+      updateGeometry()
+    }
     appliedState = nextState
     invalidate()
   }
@@ -113,7 +127,7 @@ internal class SquircleRenderView(context: Context) : ReactViewGroup(context) {
         dp(state.bottomLeftRadius),
         state.cornerSmoothing.toFloat(),
         dp(state.borderWidth),
-      )) {
+      ) and SquircleGeometryBridge.OUTER_CHANGED != 0) {
       invalidateOutline()
     }
   }

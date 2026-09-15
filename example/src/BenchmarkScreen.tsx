@@ -19,9 +19,17 @@ import { SquircleView } from 'react-native-nitro-squircle'
 import { getSquircleDiagnostics } from '../../src/diagnostics'
 
 type Renderer =
-  'RN View' | 'figma-squircle' | 'fast-squircle' | 'nitro-squircle'
+  | 'RN View'
+  | 'figma-squircle'
+  | 'fast-squircle'
+  | 'nitro-squircle'
 type Scenario =
-  'mount' | 'no-op' | 'radius' | 'smoothing' | 'resize' | 'FlatList'
+  | 'mount'
+  | 'no-op'
+  | 'radius'
+  | 'smoothing'
+  | 'resize'
+  | 'FlatList'
 type Stats = ReturnType<
   ReturnType<typeof getSquircleDiagnostics>['getSnapshot']
 >
@@ -260,7 +268,7 @@ export function BenchmarkScreen() {
           renderer={renderer}
           scenario={scenario}
           count={count}
-          phase={scenario === 'no-op' ? 0 : phase}
+          phase={phase}
           onMounted={mounted}
         />
       )}

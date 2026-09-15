@@ -70,4 +70,10 @@ struct SquirclePaths {
 [[nodiscard]] SquirclePath createSquirclePath(const SquircleGeometry& geometry);
 [[nodiscard]] SquirclePaths createSquirclePaths(const SquircleGeometry& geometry, float borderWidth);
 
+namespace detail {
+// Internal entry points: geometry and border width must already be normalized.
+[[nodiscard]] SquirclePath createNormalizedSquirclePath(const SquircleGeometry& geometry);
+[[nodiscard]] SquirclePath createNormalizedBorderPath(const SquircleGeometry& geometry, float borderWidth);
+} // namespace detail
+
 } // namespace margelo::nitro::nitrosquircle

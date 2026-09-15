@@ -28,7 +28,7 @@ internal class SquircleGeometryBridge : AutoCloseable {
     bottomLeftRadius: Float,
     smoothing: Float,
     borderWidth: Float,
-  ): Boolean {
+  ): Int {
     if (handle == 0L) handle = nativeCreate()
     val result = nativeUpdate(
       handle,
@@ -43,11 +43,14 @@ internal class SquircleGeometryBridge : AutoCloseable {
       outerBytes,
       borderBytes,
     )
-    if (result and CHANGED == 0L) return false
-
-    decode(outerValues, (result and COUNT_MASK).toInt(), outerPath)
-    decode(borderValues, (result shr 8 and COUNT_MASK).toInt(), borderCenterPath)
-    return true
+    val changes = (result shr 16).toInt()
+    if (changes and OUTER_CHANGED != 0) {
+      decode(outerValues, (result and COUNT_MASK).toInt(), outerPath)
+    }
+    if (changes and BORDER_CHANGED != 0) {
+      decode(borderValues, (result shr 8 and COUNT_MASK).toInt(), borderCenterPath)
+    }
+    return changes
   }
 
   fun reset() {
@@ -116,18 +119,19 @@ internal class SquircleGeometryBridge : AutoCloseable {
     borderBuffer: ByteBuffer,
   ): Long
 
-  private companion object {
-    const val MAX_COMMANDS = 17
-    const val FLOATS_PER_COMMAND = 7
-    const val COUNT_MASK = 0xffL
-    const val CHANGED = 1L shl 16
-    const val MOVE_TO = 0
-    const val LINE_TO = 1
-    const val CUBIC_TO = 2
-    const val ARC_TO = 3
-    const val CLOSE = 4
+  companion object {
+    const val OUTER_CHANGED = 1
+    private const val BORDER_CHANGED = 2
+    private const val MAX_COMMANDS = 17
+    private const val FLOATS_PER_COMMAND = 7
+    private const val COUNT_MASK = 0xffL
+    private const val MOVE_TO = 0
+    private const val LINE_TO = 1
+    private const val CUBIC_TO = 2
+    private const val ARC_TO = 3
+    private const val CLOSE = 4
 
-    fun directBuffer(): ByteBuffer =
+    private fun directBuffer(): ByteBuffer =
       ByteBuffer.allocateDirect(MAX_COMMANDS * FLOATS_PER_COMMAND * Float.SIZE_BYTES)
         .order(ByteOrder.nativeOrder())
   }

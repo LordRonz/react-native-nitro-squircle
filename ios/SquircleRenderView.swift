@@ -29,6 +29,7 @@ final class SquircleRenderView: UIView {
   private var state = SquircleRenderState()
   private var appliedState: SquircleRenderState?
   private var appliedBounds = CGRect.null
+  private var geometryDirty = true
 
   override init(frame: CGRect) {
     super.init(frame: frame)
@@ -66,6 +67,7 @@ final class SquircleRenderView: UIView {
     state = SquircleRenderState()
     appliedState = nil
     appliedBounds = .null
+    geometryDirty = true
     geometry.reset()
     CATransaction.begin()
     CATransaction.setDisableActions(true)
@@ -147,17 +149,28 @@ final class SquircleRenderView: UIView {
       clipMask = CAShapeLayer()
     }
 
+    geometryDirty = geometryDirty || appliedBounds.size != bounds.size ||
+      appliedState?.cornerSmoothing != state.cornerSmoothing ||
+      appliedState?.topLeftRadius != state.topLeftRadius ||
+      appliedState?.topRightRadius != state.topRightRadius ||
+      appliedState?.bottomRightRadius != state.bottomRightRadius ||
+      appliedState?.bottomLeftRadius != state.bottomLeftRadius ||
+      appliedState?.borderWidth != state.borderWidth
     let drawsGeometry = drawsBackground || drawsBorder || drawsShadow || clipsChildren
-    let geometryChanged = drawsGeometry && geometry.update(
-      withWidth: bounds.width,
-      height: bounds.height,
-      topLeftRadius: state.topLeftRadius,
-      topRightRadius: state.topRightRadius,
-      bottomRightRadius: state.bottomRightRadius,
-      bottomLeftRadius: state.bottomLeftRadius,
-      smoothing: state.cornerSmoothing,
-      borderWidth: state.borderWidth
-    )
+    var pathChanges: RNSquirclePathChanges = []
+    if drawsGeometry && geometryDirty {
+      pathChanges = geometry.update(
+        withWidth: bounds.width,
+        height: bounds.height,
+        topLeftRadius: state.topLeftRadius,
+        topRightRadius: state.topRightRadius,
+        bottomRightRadius: state.bottomRightRadius,
+        bottomLeftRadius: state.bottomLeftRadius,
+        smoothing: state.cornerSmoothing,
+        borderWidth: state.borderWidth
+      )
+      geometryDirty = false
+    }
 
     CATransaction.begin()
     CATransaction.setDisableActions(true)
@@ -166,15 +179,16 @@ final class SquircleRenderView: UIView {
       layer.contentsScale = window?.screen.scale ?? UIScreen.main.scale
     }
 
-    let needsPathUpdate =
-      geometryChanged || createsBackgroundLayer || createsBorderLayer || createsShadowLayer || createsClipMask
-    if drawsGeometry && needsPathUpdate {
+    if drawsGeometry &&
+      (pathChanges.contains(.outer) || createsBackgroundLayer || createsShadowLayer || createsClipMask) {
       let outerPath = geometry.outerPath()
       backgroundLayer?.path = outerPath
       shadowLayer?.path = outerPath
       shadowLayer?.shadowPath = outerPath
-      borderLayer?.path = geometry.borderCenterPath()
       clipMask?.path = outerPath
+    }
+    if drawsGeometry && (pathChanges.contains(.border) || createsBorderLayer) {
+      borderLayer?.path = geometry.borderCenterPath()
     }
 
     backgroundLayer?.fillColor = background.cgColor
@@ -188,12 +202,15 @@ final class SquircleRenderView: UIView {
     if let borderLayer {
       borderLayer.fillColor = UIColor.clear.cgColor
       borderLayer.strokeColor = Self.color(from: state.borderColor).cgColor
-      borderLayer.lineWidth = max(state.borderWidth, 0)
-      borderLayer.lineDashPattern = Self.dashPattern(
-        for: state.borderStyle,
-        width: borderLayer.lineWidth
-      )
-      borderLayer.lineCap = state.borderStyle == .dotted ? .round : .butt
+      if createsBorderLayer || appliedState?.borderWidth != state.borderWidth ||
+        appliedState?.borderStyle != state.borderStyle {
+        borderLayer.lineWidth = max(state.borderWidth, 0)
+        borderLayer.lineDashPattern = Self.dashPattern(
+          for: state.borderStyle,
+          width: borderLayer.lineWidth
+        )
+        borderLayer.lineCap = state.borderStyle == .dotted ? .round : .butt
+      }
       borderLayer.isHidden = !drawsBorder
     }
 

@@ -31,14 +31,19 @@ thread.
 `SquirclePathCache` owns normalized source geometry and the last outer and
 border-center command buffers. Exact comparison is safe here because
 it compares normalized source values, not independently recomputed floating
-point output. Background-only and identical updates hit the per-view cache and
-do not run corner math. There is intentionally no global cache.
+point output. With current geometry, paint-only updates skip the geometry bridge,
+and identical geometry requests hit the per-view cache. Border-width changes preserve the outer path.
+The cache normalizes the source once; a bordered rebuild also normalizes the
+newly inset geometry. There is intentionally no global cache.
 
 The geometry output is a 17-command fixed-capacity value buffer containing move,
 line, cubic, circular arc, and close commands. iOS converts changed buffers
 directly to retained `CGPath`s in Objective-C++. Android writes changed buffers
 through one direct `ByteBuffer` JNI call and decodes them into two retained
-`Path` instances. Neither renderer builds paths during drawing.
+`Path` instances. Separate outer/border change flags ensure both platforms only
+replace or decode the affected path, including clearing removed borders. Neither
+renderer builds paths during drawing. Dash patterns are reused until their width
+or style changes.
 
 On iOS, one transparent controller view is installed by the generated Nitro
 Fabric component. Background, border, shadow, and mask layers are created only
