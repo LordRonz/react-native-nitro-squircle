@@ -64,6 +64,22 @@ describe('SquircleView', () => {
     ]).toEqual([1, 2, 3, 4, 1])
   })
 
+  it('resolves border and shadow colors only when they are drawn', () => {
+    const render = (style: object) => {
+      let renderer: TestRenderer.ReactTestRenderer
+      act(() => {
+        renderer = TestRenderer.create(<SquircleView style={style} />)
+      })
+      return renderer!.root.findByType('SquircleNativeView').props
+    }
+
+    expect(render({ borderColor: '#fff' }).squircleBorderColor).toBe(0)
+    expect(
+      render({ borderColor: '#fff', borderWidth: 2 }).squircleBorderColor
+    ).not.toBe(0)
+    expect(render({ shadowColor: '#f00' }).squircleShadowColor).toBe(0xff000000)
+  })
+
   it('reuses resolved props when its style inputs are unchanged', () => {
     const style = { backgroundColor: '#112233', borderRadius: 24 }
     let renderer: TestRenderer.ReactTestRenderer

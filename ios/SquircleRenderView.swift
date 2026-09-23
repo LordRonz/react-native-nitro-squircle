@@ -75,7 +75,6 @@ final class SquircleRenderView: UIView {
     backgroundLayer?.fillColor = nil
     borderLayer?.path = nil
     borderLayer?.isHidden = true
-    shadowLayer?.path = nil
     shadowLayer?.shadowPath = nil
     shadowLayer?.shadowOpacity = 0
     clipMask?.path = nil
@@ -183,7 +182,6 @@ final class SquircleRenderView: UIView {
       (pathChanges.contains(.outer) || createsBackgroundLayer || createsShadowLayer || createsClipMask) {
       let outerPath = geometry.outerPath()
       backgroundLayer?.path = outerPath
-      shadowLayer?.path = outerPath
       shadowLayer?.shadowPath = outerPath
       clipMask?.path = outerPath
     }
@@ -193,7 +191,6 @@ final class SquircleRenderView: UIView {
 
     backgroundLayer?.fillColor = background.cgColor
 
-    shadowLayer?.fillColor = background.cgColor
     shadowLayer?.shadowColor = Self.color(from: state.shadowColor).cgColor
     shadowLayer?.shadowOpacity = Float(max(state.shadowOpacity, 0))
     shadowLayer?.shadowRadius = max(state.shadowRadius, 0)

@@ -162,12 +162,15 @@ function resolveBorderColor(style: ViewStyle): number {
   const all = style.borderColor
   const start = style.borderStartColor ?? all
   const end = style.borderEndColor ?? all
-  const colors = [
+  const values = [
     style.borderLeftColor ?? (I18nManager.isRTL ? end : start),
     style.borderTopColor ?? all,
     style.borderRightColor ?? (I18nManager.isRTL ? start : end),
     style.borderBottomColor ?? all,
-  ].map((value) => nativeColor(value, 0, 'dynamic-border-color'))
+  ]
+  const colors = (
+    values.every((value) => value === values[0]) ? [values[0]] : values
+  ).map((value) => nativeColor(value, 0, 'dynamic-border-color'))
 
   if (!colors.every((color) => color === colors[0])) {
     warnUnsupported(
@@ -212,6 +215,8 @@ export function resolveSquircleStyle(
 
   const shadowOffset = style.shadowOffset ?? { width: 0, height: 0 }
   const borderStyle = (style.borderStyle ?? 'solid') as SquircleBorderStyle
+  const shadowOpacity =
+    Platform.OS === 'ios' ? Math.max(finiteNumber(style.shadowOpacity), 0) : 0
 
   return {
     hostStyle: [input, hostStyleOverrides],
@@ -222,7 +227,7 @@ export function resolveSquircleStyle(
         0,
         'dynamic-background-color'
       ),
-      squircleBorderColor: resolveBorderColor(style),
+      squircleBorderColor: borderWidth > 0 ? resolveBorderColor(style) : 0,
       squircleBorderWidth: borderWidth,
       squircleBorderStyle: borderStyle,
       topLeftRadius,
@@ -231,15 +236,11 @@ export function resolveSquircleStyle(
       bottomLeftRadius,
       overflowHidden:
         style.overflow === 'hidden' || style.overflow === 'scroll',
-      squircleShadowColor: nativeColor(
-        style.shadowColor,
-        0xff000000,
-        'dynamic-shadow-color'
-      ),
-      squircleShadowOpacity:
-        Platform.OS === 'ios'
-          ? Math.max(finiteNumber(style.shadowOpacity), 0)
-          : 0,
+      squircleShadowColor:
+        shadowOpacity > 0
+          ? nativeColor(style.shadowColor, 0xff000000, 'dynamic-shadow-color')
+          : 0xff000000,
+      squircleShadowOpacity: shadowOpacity,
       squircleShadowRadius:
         Platform.OS === 'ios'
           ? Math.max(finiteNumber(style.shadowRadius), 0)

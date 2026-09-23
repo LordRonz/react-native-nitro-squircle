@@ -12,10 +12,6 @@ internal class SquircleGeometryBridge : AutoCloseable {
   val outerPath = Path()
   val borderCenterPath = Path()
 
-  private val outerBytes = directBuffer()
-  private val borderBytes = directBuffer()
-  private val outerValues = outerBytes.asFloatBuffer()
-  private val borderValues = borderBytes.asFloatBuffer()
   private val arcBounds = RectF()
   private var handle = 0L
 
@@ -130,6 +126,11 @@ internal class SquircleGeometryBridge : AutoCloseable {
     private const val CUBIC_TO = 2
     private const val ARC_TO = 3
     private const val CLOSE = 4
+
+    private val outerBytes = directBuffer()
+    private val borderBytes = directBuffer()
+    private val outerValues = outerBytes.asFloatBuffer()
+    private val borderValues = borderBytes.asFloatBuffer()
 
     private fun directBuffer(): ByteBuffer =
       ByteBuffer.allocateDirect(MAX_COMMANDS * FLOATS_PER_COMMAND * Float.SIZE_BYTES)
